@@ -1,0 +1,699 @@
+<title>Physics by B. Kumar</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@112,500;112,600;112,700&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one calm column, wide margins, a live projectile on graph paper as the hero's single moving element. */
+:root {
+  --bg: #F5F6F9;
+  --surface: #FFFFFF;
+  --ink: #0D1120;
+  --muted: #586078;
+  --line: #E1E4EC;
+  --grid: #E9ECF3;
+  --accent: #2F45E0;      /* Cherenkov blue */
+  --accent-soft: #E8EBFD;
+  --on-accent: #FFFFFF;
+
+  --f-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --f-body: "Geist", "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "Geist Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+
+  --step--1: 0.8125rem;
+  --step-0: 1rem;
+  --step-1: 1.1875rem;
+  --step-2: 1.5rem;
+  --step-3: clamp(1.75rem, 1.2rem + 1.8vw, 2.5rem);
+  --step-4: clamp(2.4rem, 1.4rem + 4vw, 4.6rem);
+
+  --radius: 14px;
+  --wrap: 1180px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0A0C13; --surface: #11141F; --ink: #E8EBF4; --muted: #8C93AA;
+    --line: #222739; --grid: #171B29; --accent: #8191FF; --accent-soft: #1A1F3C; --on-accent: #0A0C13;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0A0C13; --surface: #11141F; --ink: #E8EBF4; --muted: #8C93AA;
+  --line: #222739; --grid: #171B29; --accent: #8191FF; --accent-soft: #1A1F3C; --on-accent: #0A0C13;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--f-body);
+  font-size: var(--step-0);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+body::before {
+  content: ""; position: fixed; inset: 0 0 auto;
+  height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg);
+}
+a { color: inherit; text-decoration: none; }
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px;
+}
+h1, h2, h3 { font-family: var(--f-display); font-weight: 600; letter-spacing: -0.02em; line-height: 1.08; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+
+.wrap {
+  max-width: var(--wrap); margin: 0 auto;
+  padding-left: max(24px, env(safe-area-inset-left, 0px));
+  padding-right: max(24px, env(safe-area-inset-right, 0px));
+}
+@media (max-width: 480px) {
+  .wrap { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+}
+.eyebrow {
+  font-family: var(--f-mono); font-size: var(--step--1); letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--muted);
+}
+.tag {
+  display: inline-block; font-family: var(--f-mono); font-size: 0.6875rem; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--muted); border: 1px dashed var(--line);
+  border-radius: 999px; padding: 2px 8px; line-height: 1.5;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex; align-items: center; gap: 10px; height: 46px; padding: 0 20px;
+  border-radius: 999px; font: 500 0.9375rem/1 var(--f-body); border: 1px solid transparent;
+  cursor: pointer; transition: transform .2s ease, background-color .2s ease, border-color .2s ease;
+}
+.btn-primary { background: var(--ink); color: var(--bg); }
+.btn-primary:hover { transform: translateY(-1px); }
+.btn-ghost { border-color: var(--line); color: var(--ink); background: transparent; }
+.btn-ghost:hover { border-color: var(--ink); }
+.btn .arrow { font-family: var(--f-mono); transition: transform .2s ease; }
+.btn:hover .arrow { transform: translateX(3px); }
+
+/* Header */
+header.site {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20;
+  background: color-mix(in srgb, var(--bg) 86%, transparent);
+  backdrop-filter: saturate(140%) blur(12px); -webkit-backdrop-filter: saturate(140%) blur(12px);
+  border-bottom: 1px solid var(--line);
+}
+.nav { display: flex; align-items: center; justify-content: space-between; gap: 24px; height: 68px; }
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand-mark {
+  width: 34px; height: 34px; border-radius: 9px; background: var(--ink); color: var(--bg);
+  display: grid; place-items: center; font: 600 0.95rem/1 var(--f-display);
+}
+.brand-name { font: 600 1rem/1.1 var(--f-display); letter-spacing: -0.01em; }
+.brand-name small { display: block; font: 400 0.6875rem/1.4 var(--f-mono); letter-spacing: 0.06em; color: var(--muted); text-transform: uppercase; }
+.nav-links { display: flex; gap: 30px; font-size: 0.9375rem; color: var(--muted); }
+.nav-links a:hover { color: var(--ink); }
+.nav .btn { height: 40px; padding: 0 16px; font-size: 0.875rem; }
+@media (max-width: 860px) { .nav-links { display: none; } }
+@media (max-width: 420px) { .brand-name small { display: none; } }
+
+/* Hero */
+.hero { padding-block: clamp(48px, 8vw, 104px) clamp(56px, 8vw, 96px); }
+.hero-grid { display: grid; grid-template-columns: 1.05fr 1fr; gap: clamp(32px, 5vw, 72px); align-items: center; }
+.hero-copy { display: flex; flex-direction: column; gap: 28px; min-width: 0; }
+.hero h1 { font-size: var(--step-4); font-weight: 600; }
+.hero h1 em { font-style: normal; color: var(--accent); }
+.hero-lede { font-size: var(--step-1); color: var(--muted); max-width: 34ch; line-height: 1.55; }
+.hero-cta { display: flex; flex-wrap: wrap; gap: 12px; }
+.tracks { display: flex; flex-wrap: wrap; gap: 8px; }
+.tracks span {
+  font: 500 0.8125rem/1 var(--f-mono); padding: 8px 12px; border-radius: 999px;
+  background: var(--accent-soft); color: var(--accent);
+}
+
+.lab {
+  position: relative; background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius); overflow: hidden; aspect-ratio: 5 / 4; max-width: 100%; min-width: 0;
+}
+.lab canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.lab-head, .lab-foot {
+  position: absolute; left: 18px; right: 18px; display: flex; justify-content: space-between; gap: 12px;
+  font: 400 0.75rem/1.4 var(--f-mono); color: var(--muted); pointer-events: none;
+}
+.lab-head { top: 16px; }
+.lab-foot { bottom: 14px; flex-wrap: wrap; }
+.lab-foot b { color: var(--ink); font-weight: 500; font-variant-numeric: tabular-nums; }
+@media (max-width: 900px) {
+  .hero-grid { grid-template-columns: 1fr; }
+  .lab { aspect-ratio: 4 / 3; }
+}
+
+/* Facts strip */
+.facts { border-block: 1px solid var(--line); }
+.facts-row { display: grid; grid-template-columns: repeat(4, 1fr); }
+.fact { padding-block: 28px; display: flex; flex-direction: column; gap: 4px; padding-right: 16px; }
+.fact + .fact { padding-left: 24px; border-left: 1px solid var(--line); }
+.fact strong { font: 600 var(--step-2)/1.1 var(--f-display); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.fact span { color: var(--muted); font-size: 0.875rem; }
+@media (max-width: 760px) {
+  .facts-row { grid-template-columns: 1fr 1fr; }
+  .fact:nth-child(3) { padding-left: 0; border-left: 0; }
+  .fact:nth-child(n+3) { border-top: 1px solid var(--line); }
+}
+
+/* Sections */
+section.block { padding-block: clamp(72px, 10vw, 128px); }
+.sec-head { display: grid; grid-template-columns: 1fr 1fr; gap: 24px 64px; align-items: end; margin-bottom: clamp(40px, 6vw, 64px); }
+.sec-head h2 { font-size: var(--step-3); }
+.sec-head p { color: var(--muted); max-width: 46ch; }
+.sec-head .eyebrow { grid-column: 1 / -1; }
+@media (max-width: 760px) { .sec-head { grid-template-columns: 1fr; } }
+
+/* Programs */
+.programs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.program {
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 28px; display: flex; flex-direction: column; gap: 20px; min-width: 0;
+  transition: border-color .25s ease, transform .25s ease;
+}
+.program:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); transform: translateY(-2px); }
+.program-top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.program-code { font: 500 0.75rem/1 var(--f-mono); color: var(--accent); letter-spacing: 0.06em; }
+.program h3 { font-size: var(--step-2); }
+.program > p { color: var(--muted); font-size: 0.9375rem; }
+.spec { display: grid; gap: 10px; margin: 0; padding: 18px 0 0; border-top: 1px solid var(--line); }
+.spec div { display: flex; justify-content: space-between; gap: 16px; font-size: 0.875rem; }
+.spec dt { color: var(--muted); }
+.spec dd { margin: 0; text-align: right; font-weight: 500; }
+.program .more { margin-top: auto; font-size: 0.875rem; font-weight: 500; display: inline-flex; gap: 8px; align-items: center; }
+.program .more:hover { color: var(--accent); }
+@media (max-width: 960px) { .programs { grid-template-columns: 1fr; } }
+
+/* Method — a real sequence, so it is numbered */
+.method { background: var(--ink); color: var(--bg); }
+.method .eyebrow, .method .sec-head p { color: color-mix(in srgb, var(--bg) 62%, var(--ink)); }
+.steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; list-style: none; margin: 0; padding: 0; counter-reset: step; }
+.steps li {
+  padding: 28px 28px 8px 0; display: flex; flex-direction: column; gap: 12px; min-width: 0;
+  border-top: 1px solid color-mix(in srgb, var(--bg) 22%, var(--ink));
+}
+.steps li + li { padding-left: 28px; border-left: 1px solid color-mix(in srgb, var(--bg) 22%, var(--ink)); }
+.steps .n { font: 500 0.8125rem/1 var(--f-mono); color: color-mix(in srgb, var(--bg) 55%, var(--ink)); }
+.steps h3 { font-size: var(--step-1); }
+.steps p { color: color-mix(in srgb, var(--bg) 68%, var(--ink)); font-size: 0.9375rem; }
+.steps code { font-family: var(--f-mono); font-size: 0.8125rem; color: var(--bg); background: color-mix(in srgb, var(--bg) 10%, var(--ink)); padding: 2px 6px; border-radius: 5px; }
+@media (max-width: 900px) {
+  .steps { grid-template-columns: 1fr 1fr; }
+  .steps li:nth-child(3) { padding-left: 0; border-left: 0; }
+}
+@media (max-width: 520px) {
+  .steps { grid-template-columns: 1fr; }
+  .steps li + li { padding-left: 0; border-left: 0; }
+}
+
+/* Syllabus map */
+.units { display: grid; grid-template-columns: 220px 1fr; border-top: 1px solid var(--line); }
+.units > div { padding-block: 22px; border-bottom: 1px solid var(--line); min-width: 0; }
+.unit-name { font: 600 var(--step-1)/1.2 var(--f-display); letter-spacing: -0.01em; padding-right: 16px; }
+.unit-name small { display: block; font: 400 0.75rem/1.6 var(--f-mono); color: var(--muted); letter-spacing: 0.02em; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chips span { font-size: 0.875rem; padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); }
+@media (max-width: 680px) {
+  .units { grid-template-columns: 1fr; }
+  .units > div:nth-child(odd) { border-bottom: 0; padding-bottom: 8px; }
+  .units > div:nth-child(even) { padding-top: 8px; }
+}
+
+/* Mentor */
+.mentor { display: grid; grid-template-columns: 0.8fr 1.2fr; gap: clamp(32px, 6vw, 88px); align-items: center; }
+.portrait {
+  aspect-ratio: 4 / 5; max-width: 100%; border-radius: var(--radius); border: 1px solid var(--line);
+  background:
+    linear-gradient(var(--grid) 1px, transparent 1px) 0 0 / 24px 24px,
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0 / 24px 24px,
+    var(--surface);
+  display: grid; place-items: center; position: relative;
+}
+.portrait .initials { font: 600 clamp(4rem, 9vw, 7rem)/1 var(--f-display); color: var(--line); letter-spacing: -0.04em; }
+.portrait .tag { position: absolute; left: 16px; bottom: 16px; background: var(--surface); }
+.mentor-copy { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
+.mentor-copy h2 { font-size: var(--step-3); }
+.mentor-copy blockquote {
+  margin: 0; font: 500 var(--step-2)/1.35 var(--f-display); letter-spacing: -0.015em; max-width: 28ch;
+}
+.mentor-copy p { color: var(--muted); max-width: 56ch; }
+.creds { display: flex; flex-wrap: wrap; gap: 8px 24px; font: 400 0.8125rem/1.5 var(--f-mono); color: var(--muted); }
+.creds span::before { content: "→ "; color: var(--accent); }
+@media (max-width: 820px) { .mentor { grid-template-columns: 1fr; } .portrait { max-width: 360px; } }
+
+/* Results */
+.results { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.result {
+  border: 1px solid var(--line); border-radius: var(--radius); padding: 28px; background: var(--surface);
+  display: flex; flex-direction: column; gap: 18px; min-width: 0;
+}
+.result-score { display: flex; align-items: baseline; gap: 10px; }
+.result-score strong { font: 600 var(--step-3)/1 var(--f-display); letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+.result-score span { font: 400 0.8125rem/1 var(--f-mono); color: var(--muted); }
+.result p { font-size: 0.9375rem; }
+.result footer { margin-top: auto; display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 0.875rem; color: var(--muted); }
+@media (max-width: 960px) { .results { grid-template-columns: 1fr; } }
+
+/* Batches */
+.table-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+table { width: 100%; border-collapse: collapse; min-width: 640px; font-size: 0.9375rem; }
+th, td { text-align: left; padding: 18px 22px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { font: 400 0.75rem/1 var(--f-mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+tbody tr:last-child td { border-bottom: 0; }
+td.num { font-family: var(--f-mono); font-variant-numeric: tabular-nums; font-size: 0.875rem; }
+.status { font: 500 0.75rem/1 var(--f-mono); padding: 6px 10px; border-radius: 999px; display: inline-block; }
+.status.open { background: var(--accent-soft); color: var(--accent); }
+.status.few { background: color-mix(in srgb, #D98A00 16%, transparent); color: #B06F00; }
+.status.full { background: var(--grid); color: var(--muted); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .status.few { color: #F2B54A; } }
+:root[data-theme="dark"] .status.few { color: #F2B54A; }
+.table-note { margin-top: 14px; font-size: 0.8125rem; color: var(--muted); }
+
+/* Visit / enquiry */
+.visit { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.visit-info, .enquiry {
+  border: 1px solid var(--line); border-radius: var(--radius); padding: clamp(24px, 4vw, 40px); min-width: 0;
+}
+.visit-info { background: var(--accent); color: var(--on-accent); display: flex; flex-direction: column; gap: 28px; border-color: transparent; }
+.visit-info h2 { font-size: var(--step-3); }
+.visit-info .eyebrow { color: color-mix(in srgb, var(--on-accent) 72%, var(--accent)); }
+.visit-info dl { margin: 0; display: grid; gap: 18px; }
+.visit-info dt { font: 400 0.75rem/1.4 var(--f-mono); text-transform: uppercase; letter-spacing: 0.08em; color: color-mix(in srgb, var(--on-accent) 70%, var(--accent)); }
+.visit-info dd { margin: 4px 0 0; font-size: var(--step-1); font-weight: 500; user-select: all; }
+.visit-info .btn { margin-top: auto; align-self: flex-start; background: var(--on-accent); color: var(--accent); }
+.enquiry { background: var(--surface); display: flex; flex-direction: column; gap: 18px; }
+.enquiry h3 { font-size: var(--step-2); }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field label { font-size: 0.8125rem; color: var(--muted); }
+.field input, .field select {
+  height: 48px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--line);
+  background: var(--bg); color: var(--ink); font: 400 1rem var(--f-body); width: 100%;
+}
+.field input:focus, .field select:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px var(--accent-soft); }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.enquiry .btn-primary { justify-content: center; width: 100%; height: 50px; margin-top: 4px; }
+.form-msg { font-size: 0.875rem; color: var(--accent); min-height: 1.4em; }
+@media (max-width: 860px) { .visit { grid-template-columns: 1fr; } }
+@media (max-width: 420px) { .field-row { grid-template-columns: 1fr; } }
+
+/* Footer */
+footer.site { border-top: 1px solid var(--line); padding-block: 40px 48px; }
+.foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 24px; align-items: center; font-size: 0.875rem; color: var(--muted); }
+.foot .eq { font-family: var(--f-mono); font-size: 0.8125rem; }
+
+/* Page-load: gentle rise from a visible state */
+@media (prefers-reduced-motion: no-preference) {
+  .hero-copy > * { animation: rise .7s cubic-bezier(.2,.7,.2,1) both; }
+  .hero-copy > *:nth-child(2) { animation-delay: .06s; }
+  .hero-copy > *:nth-child(3) { animation-delay: .12s; }
+  .hero-copy > *:nth-child(4) { animation-delay: .18s; }
+  .hero-copy > *:nth-child(5) { animation-delay: .24s; }
+  @keyframes rise { from { transform: translateY(10px); opacity: .35; } to { transform: none; opacity: 1; } }
+}
+</style>
+
+<header class="site">
+  <div class="wrap nav">
+    <a class="brand" href="#top" aria-label="Physics by B. Kumar, home">
+      <span class="brand-mark">BK</span>
+      <span class="brand-name">Physics by B. Kumar<small>Class 11–12 · JEE · NEET</small></span>
+    </a>
+    <nav class="nav-links" aria-label="Main">
+      <a href="#programs">Programs</a>
+      <a href="#method">Method</a>
+      <a href="#mentor">Mentor</a>
+      <a href="#batches">Batches</a>
+      <a href="#visit">Visit</a>
+    </nav>
+    <a class="btn btn-primary" href="#visit">Book a demo class</a>
+  </div>
+</header>
+
+<main id="top">
+  <!-- Hero -->
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div class="hero-copy">
+        <span class="eyebrow">Physics coaching · New Delhi</span>
+        <h1>Physics, built from <em>first principles.</em></h1>
+        <p class="hero-lede">Small batches for Class 11 and 12, JEE Main &amp; Advanced, and NEET. Every chapter is derived, then drilled, then tested.</p>
+        <div class="hero-cta">
+          <a class="btn btn-primary" href="#visit">Book a free demo class <span class="arrow">→</span></a>
+          <a class="btn btn-ghost" href="#programs">See programs</a>
+        </div>
+        <div class="tracks" aria-label="Tracks offered">
+          <span>CBSE 11–12</span><span>JEE Main</span><span>JEE Advanced</span><span>NEET</span>
+        </div>
+      </div>
+
+      <figure class="lab" aria-label="Animated projectile motion diagram" style="margin:0">
+        <canvas id="lab"></canvas>
+        <div class="lab-head"><span>Fig. 1 — Projectile, u = 20 m/s, θ = 50°</span><span>g = 9.8 m/s²</span></div>
+        <div class="lab-foot">
+          <span>t <b id="r-t">0.00</b> s</span>
+          <span>x <b id="r-x">0.0</b> m</span>
+          <span>y <b id="r-y">0.0</b> m</span>
+          <span>|v| <b id="r-v">20.0</b> m/s</span>
+        </div>
+      </figure>
+    </div>
+  </section>
+
+  <!-- Facts -->
+  <div class="facts">
+    <div class="wrap facts-row">
+      <div class="fact"><strong>25</strong><span>Students per batch, max</span></div>
+      <div class="fact"><strong>3</strong><span>Tracks: Boards, JEE, NEET</span></div>
+      <div class="fact"><strong>Weekly</strong><span>Chapter tests with review</span></div>
+      <div class="fact"><strong>1 : 1</strong><span>Doubt sessions every Sunday</span></div>
+    </div>
+  </div>
+
+  <!-- Programs -->
+  <section class="block" id="programs">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="eyebrow">Programs</span>
+        <h2>One subject. Three ways to sit the exam.</h2>
+        <p>The same physics underneath, with different depth, pace and question style for each exam. Pick the track that matches your target.</p>
+      </div>
+      <div class="programs">
+        <article class="program">
+          <div class="program-top"><span class="program-code">TRACK · BOARDS</span><span class="tag">2 years</span></div>
+          <h3>Class 11 &amp; 12</h3>
+          <p>Full CBSE syllabus with NCERT at the core. Derivations written out, numericals timed, and practicals explained.</p>
+          <dl class="spec">
+            <div><dt>Focus</dt><dd>NCERT, derivations, board pattern</dd></div>
+            <div><dt>Classes</dt><dd>4 per week</dd></div>
+            <div><dt>Tests</dt><dd>Chapter + pre-board</dd></div>
+          </dl>
+          <a class="more" href="#batches">View batches <span class="arrow">→</span></a>
+        </article>
+        <article class="program">
+          <div class="program-top"><span class="program-code">TRACK · JEE</span><span class="tag">1–2 years</span></div>
+          <h3>JEE Main &amp; Advanced</h3>
+          <p>Concepts taken to Advanced depth: multi-concept problems, calculus in mechanics, and speed for Main.</p>
+          <dl class="spec">
+            <div><dt>Focus</dt><dd>Problem solving, Irodov-level</dd></div>
+            <div><dt>Classes</dt><dd>5 per week</dd></div>
+            <div><dt>Tests</dt><dd>Weekly + full mocks</dd></div>
+          </dl>
+          <a class="more" href="#batches">View batches <span class="arrow">→</span></a>
+        </article>
+        <article class="program">
+          <div class="program-top"><span class="program-code">TRACK · NEET</span><span class="tag">1–2 years</span></div>
+          <h3>NEET Physics</h3>
+          <p>The subject most NEET aspirants fear, made scoring. Formula fluency, shortcuts that hold up, and accuracy drills.</p>
+          <dl class="spec">
+            <div><dt>Focus</dt><dd>NCERT + MCQ speed</dd></div>
+            <div><dt>Classes</dt><dd>4 per week</dd></div>
+            <div><dt>Tests</dt><dd>Weekly 45-question MCQ</dd></div>
+          </dl>
+          <a class="more" href="#batches">View batches <span class="arrow">→</span></a>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- Method -->
+  <section class="block method" id="method">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="eyebrow">Method</span>
+        <h2>How every chapter is taught</h2>
+        <p>The same four steps, in the same order, for every topic from kinematics to semiconductors.</p>
+      </div>
+      <ol class="steps">
+        <li><span class="n">01</span><h3>Concept</h3><p>Start from what is physically happening, with a diagram on the board before any formula.</p></li>
+        <li><span class="n">02</span><h3>Derivation</h3><p>Build the result yourself, so <code>v² = u² + 2as</code> is something you can rebuild, not memorise.</p></li>
+        <li><span class="n">03</span><h3>Problems</h3><p>Graded sets, from NCERT to JEE Advanced, solved in class and then on your own.</p></li>
+        <li><span class="n">04</span><h3>Test &amp; review</h3><p>A timed chapter test, then a one-on-one review of every mistake.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- Syllabus -->
+  <section class="block" id="syllabus">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="eyebrow">Syllabus</span>
+        <h2>Everything from units to nuclei</h2>
+        <p>The full Class 11–12 physics syllabus, which is also the common ground of JEE and NEET.</p>
+      </div>
+      <div class="units">
+        <div class="unit-name">Mechanics<small>Class 11</small></div>
+        <div class="chips"><span>Units &amp; dimensions</span><span>Kinematics</span><span>Laws of motion</span><span>Work, energy, power</span><span>Rotational motion</span><span>Gravitation</span><span>Properties of matter</span></div>
+        <div class="unit-name">Heat &amp; waves<small>Class 11</small></div>
+        <div class="chips"><span>Thermal properties</span><span>Thermodynamics</span><span>Kinetic theory</span><span>Oscillations (SHM)</span><span>Waves</span></div>
+        <div class="unit-name">Electromagnetism<small>Class 12</small></div>
+        <div class="chips"><span>Electrostatics</span><span>Capacitance</span><span>Current electricity</span><span>Magnetism</span><span>EM induction</span><span>Alternating current</span><span>EM waves</span></div>
+        <div class="unit-name">Optics<small>Class 12</small></div>
+        <div class="chips"><span>Ray optics</span><span>Optical instruments</span><span>Wave optics</span></div>
+        <div class="unit-name">Modern physics<small>Class 12</small></div>
+        <div class="chips"><span>Dual nature</span><span>Atoms</span><span>Nuclei</span><span>Semiconductors</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Mentor -->
+  <section class="block" id="mentor" style="padding-top:0">
+    <div class="wrap mentor">
+      <div class="portrait">
+        <span class="initials">BK</span>
+        <span class="tag">Photo goes here</span>
+      </div>
+      <div class="mentor-copy">
+        <span class="eyebrow">Your teacher</span>
+        <h2>B. Kumar</h2>
+        <blockquote>“If you can draw the free-body diagram, you've already solved half the problem.”</blockquote>
+        <p>Every class is taught by B. Kumar personally. Short bio goes here: education, years teaching, and what makes the classes different. <span class="tag">Placeholder</span></p>
+        <div class="creds"><span>Qualification</span><span>Years of teaching</span><span>Students mentored</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Results -->
+  <section class="block" id="results" style="padding-top:0">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="eyebrow">Results</span>
+        <h2>What students say</h2>
+        <p>Layout preview. Replace each card with a real student's result and words, with their permission.</p>
+      </div>
+      <div class="results">
+        <article class="result">
+          <div class="result-score"><strong>—</strong><span>Physics percentile · JEE Main</span></div>
+          <p>Student's own words about the class go here, one or two sentences long.</p>
+          <footer><span>Student name, year</span><span class="tag">Sample</span></footer>
+        </article>
+        <article class="result">
+          <div class="result-score"><strong>—</strong><span>out of 180 · NEET Physics</span></div>
+          <p>Student's own words about the class go here, one or two sentences long.</p>
+          <footer><span>Student name, year</span><span class="tag">Sample</span></footer>
+        </article>
+        <article class="result">
+          <div class="result-score"><strong>—</strong><span>out of 70 · CBSE Class 12 theory</span></div>
+          <p>Student's own words about the class go here, one or two sentences long.</p>
+          <footer><span>Student name, year</span><span class="tag">Sample</span></footer>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- Batches -->
+  <section class="block" id="batches" style="padding-top:0">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="eyebrow">Batches · 2027 session</span>
+        <h2>Upcoming batches</h2>
+        <p>Seats are limited so every student gets attention. Timings below are sample rows to show the layout.</p>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Batch</th><th>Track</th><th>Days</th><th>Time</th><th>Starts</th><th>Seats</th></tr></thead>
+          <tbody>
+            <tr><td>Class 11 Foundation</td><td>Boards + JEE</td><td>Mon · Wed · Fri</td><td class="num">16:00–18:00</td><td class="num">05 Apr 2027</td><td><span class="status open">Open</span></td></tr>
+            <tr><td>Class 12 Boards</td><td>Boards</td><td>Tue · Thu · Sat</td><td class="num">16:00–18:00</td><td class="num">01 Apr 2027</td><td><span class="status few">Few left</span></td></tr>
+            <tr><td>JEE Target</td><td>JEE Main + Adv</td><td>Mon – Fri</td><td class="num">18:30–20:30</td><td class="num">12 Apr 2027</td><td><span class="status open">Open</span></td></tr>
+            <tr><td>NEET Target</td><td>NEET</td><td>Tue · Thu · Sat</td><td class="num">18:30–20:30</td><td class="num">12 Apr 2027</td><td><span class="status full">Waitlist</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="table-note">Sample timings. Replace with the real schedule.</p>
+    </div>
+  </section>
+
+  <!-- Visit -->
+  <section class="block" id="visit" style="padding-top:0">
+    <div class="wrap visit">
+      <div class="visit-info">
+        <span class="eyebrow">Visit the centre</span>
+        <h2>Sit in on a class before you decide.</h2>
+        <dl>
+          <div><dt>Address</dt><dd>Street address, New Delhi</dd></div>
+          <div><dt>Phone</dt><dd>+91 00000 00000</dd></div>
+          <div><dt>Hours</dt><dd>Mon–Sat, 10:00–21:00</dd></div>
+        </dl>
+        <a class="btn" href="https://www.google.com/maps/place/Physics+by+B+kumar/@28.5534024,77.1729163,896m/data=!3m2!1e3!4b1!4m6!3m5!1s0x390d1d14c3f57f7d:0xc3bf5564dc01efc1!8m2!3d28.5533977!4d77.1754912!16s%2Fg%2F11nk80mpgp" target="_blank" rel="noopener">Open in Google Maps <span class="arrow">↗</span></a>
+      </div>
+      <form class="enquiry" id="enquiry" novalidate>
+        <h3>Book a free demo class</h3>
+        <div class="field-row">
+          <div class="field"><label for="f-name">Student name</label><input id="f-name" name="name" autocomplete="name" placeholder="Aarav Sharma"></div>
+          <div class="field"><label for="f-phone">Phone</label><input id="f-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="98xxxxxxxx"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label for="f-class">Class</label>
+            <select id="f-class" name="class"><option>Class 11</option><option>Class 12</option><option>12th pass (dropper)</option></select></div>
+          <div class="field"><label for="f-track">Target</label>
+            <select id="f-track" name="track"><option>JEE Main &amp; Advanced</option><option>NEET</option><option>Boards only</option></select></div>
+        </div>
+        <button class="btn btn-primary" type="submit">Request a call back <span class="arrow">→</span></button>
+        <p class="form-msg" id="form-msg" aria-live="polite"></p>
+      </form>
+    </div>
+  </section>
+</main>
+
+<footer class="site">
+  <div class="wrap foot">
+    <span>© 2026 Physics by B. Kumar · New Delhi</span>
+    <span class="eq">F = dp/dt</span>
+  </div>
+</footer>
+
+<script>
+(() => {
+  // Enquiry form: design preview only, not connected to anything yet.
+  const form = document.getElementById('enquiry');
+  const msg = document.getElementById('form-msg');
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const name = form.elements.name.value.trim();
+    const phone = form.elements.phone.value.replace(/\D/g, '');
+    if (!name) { msg.textContent = 'Enter the student’s name.'; form.elements.name.focus(); return; }
+    if (phone.length < 10) { msg.textContent = 'Enter a 10-digit phone number.'; form.elements.phone.focus(); return; }
+    msg.textContent = 'Design preview: this form is not connected yet, so nothing was sent.';
+  });
+
+  // Projectile on graph paper
+  const canvas = document.getElementById('lab');
+  const ctx = canvas.getContext('2d');
+  const out = { t: r('r-t'), x: r('r-x'), y: r('r-y'), v: r('r-v') };
+  function r(id) { return document.getElementById(id); }
+
+  const u = 20, th = 50 * Math.PI / 180, g = 9.8;
+  const ux = u * Math.cos(th), uy = u * Math.sin(th);
+  const T = 2 * uy / g, R = ux * T, H = uy * uy / (2 * g);
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  let W = 0, Hh = 0, dpr = 1;
+  function size() {
+    const b = canvas.getBoundingClientRect();
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = b.width; Hh = b.height;
+    canvas.width = Math.round(W * dpr); canvas.height = Math.round(Hh * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+  function draw(t) {
+    const c = { grid: css('--grid'), line: css('--line'), ink: css('--ink'), muted: css('--muted'), accent: css('--accent'), surface: css('--surface') };
+    const padL = 36, padR = 28, padT = 54, padB = 58;
+    const sx = (W - padL - padR) / R, sy = (Hh - padT - padB) / (H * 1.15);
+    const s = Math.min(sx, sy);
+    const ox = padL, oy = Hh - padB;
+    const X = (x) => ox + x * s, Y = (y) => oy - y * s;
+
+    ctx.clearRect(0, 0, W, Hh);
+
+    // grid: 1 m minor, 5 m major
+    ctx.lineWidth = 1;
+    for (let m = 0; m * s < W; m++) {
+      ctx.strokeStyle = m % 5 === 0 ? c.line : c.grid;
+      ctx.beginPath(); ctx.moveTo(Math.round(X(m)) + .5, 0); ctx.lineTo(Math.round(X(m)) + .5, Hh); ctx.stroke();
+    }
+    for (let m = 0; oy - m * s > 0; m++) {
+      ctx.strokeStyle = m % 5 === 0 ? c.line : c.grid;
+      ctx.beginPath(); ctx.moveTo(0, Math.round(Y(m)) + .5); ctx.lineTo(W, Math.round(Y(m)) + .5); ctx.stroke();
+    }
+    // ground
+    ctx.strokeStyle = c.ink; ctx.lineWidth = 1.25;
+    ctx.beginPath(); ctx.moveTo(0, oy + .5); ctx.lineTo(W, oy + .5); ctx.stroke();
+
+    // full path (dashed, faint)
+    ctx.setLineDash([3, 5]); ctx.strokeStyle = c.muted; ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let i = 0; i <= 80; i++) { const tt = T * i / 80; const px = X(ux * tt), py = Y(uy * tt - .5 * g * tt * tt); i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); }
+    ctx.stroke(); ctx.setLineDash([]);
+
+    // travelled path
+    ctx.strokeStyle = c.accent; ctx.lineWidth = 2;
+    ctx.beginPath();
+    const steps = Math.max(2, Math.ceil(80 * t / T));
+    for (let i = 0; i <= steps; i++) { const tt = t * i / steps; const px = X(ux * tt), py = Y(uy * tt - .5 * g * tt * tt); i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); }
+    ctx.stroke();
+
+    // stroboscopic marks every 0.25 s
+    ctx.fillStyle = c.accent;
+    for (let tt = 0; tt <= t + 1e-6; tt += 0.25) {
+      ctx.beginPath(); ctx.arc(X(ux * tt), Y(uy * tt - .5 * g * tt * tt), 2.2, 0, Math.PI * 2); ctx.fill();
+    }
+
+    // H and R annotations
+    ctx.font = '11px ' + css('--f-mono'); ctx.fillStyle = c.muted;
+    ctx.strokeStyle = c.muted; ctx.lineWidth = 1; ctx.setLineDash([2, 3]);
+    ctx.beginPath(); ctx.moveTo(X(R / 2) + .5, oy); ctx.lineTo(X(R / 2) + .5, Y(H)); ctx.stroke(); ctx.setLineDash([]);
+    ctx.textAlign = 'left'; ctx.fillText('H = ' + H.toFixed(1) + ' m', X(R / 2) + 6, Y(H / 2));
+    ctx.textAlign = 'right'; ctx.fillText('R = ' + R.toFixed(1) + ' m', X(R), oy + 16);
+    ctx.textAlign = 'left'; ctx.fillText('O', ox - 14, oy + 16);
+
+    // body + velocity components
+    const x = ux * t, y = uy * t - .5 * g * t * t, vy = uy - g * t;
+    const px = X(x), py = Y(y), k = 2.2;
+    arrow(px, py, px + ux * k, py, c.muted, 1.25);
+    arrow(px, py, px, py - vy * k, c.muted, 1.25);
+    arrow(px, py, px + ux * k, py - vy * k, c.ink, 1.75);
+    ctx.fillStyle = c.surface; ctx.strokeStyle = c.ink; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(px, py, 6, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+
+    out.t.textContent = t.toFixed(2);
+    out.x.textContent = x.toFixed(1);
+    out.y.textContent = Math.max(0, y).toFixed(1);
+    out.v.textContent = Math.hypot(ux, vy).toFixed(1);
+  }
+  function arrow(x1, y1, x2, y2, col, w) {
+    const a = Math.atan2(y2 - y1, x2 - x1), L = Math.hypot(x2 - x1, y2 - y1);
+    if (L < 4) return;
+    ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = w;
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x2, y2);
+    ctx.lineTo(x2 - 7 * Math.cos(a - .4), y2 - 7 * Math.sin(a - .4));
+    ctx.lineTo(x2 - 7 * Math.cos(a + .4), y2 - 7 * Math.sin(a + .4));
+    ctx.closePath(); ctx.fill();
+  }
+
+  size();
+  const still = T * 0.62;
+  if (reduce) { draw(still); }
+  else {
+    draw(still);
+    let start = null; const slow = 0.55, hold = 1.4;
+    const loop = (now) => {
+      if (start === null) start = now;
+      const el = ((now - start) / 1000) * slow;
+      const cyc = el % (T + hold * slow);
+      draw(Math.min(cyc, T));
+      requestAnimationFrame(loop);
+    };
+    requestAnimationFrame(loop);
+  }
+  let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { size(); if (reduce) draw(still); }, 120); });
+  matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', () => { if (reduce) draw(still); });
+})();
+</script>

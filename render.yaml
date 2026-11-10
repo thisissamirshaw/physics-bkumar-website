@@ -1,0 +1,17 @@
+# Render Blueprint: free web service. Data lives in an external Postgres (e.g. Neon free tier),
+# because Render's free disk is wiped on every restart.
+services:
+  - type: web
+    name: physics-bkumar
+    runtime: docker
+    plan: free
+    healthCheckPath: /api/content
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: DATABASE_URL
+        sync: false

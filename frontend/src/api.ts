@@ -78,3 +78,13 @@ export async function api<T>(path: string, init: RequestInit & { admin?: boolean
 }
 
 export const json = (data: unknown) => JSON.stringify(data)
+
+/** True in the GitHub Pages build, where there is no server: content is a JSON file, no admin. */
+export const STATIC_SITE = import.meta.env.VITE_STATIC === '1'
+
+export async function loadContent<T>(): Promise<T> {
+  if (!STATIC_SITE) return api<T>('/content')
+  const res = await fetch(`${import.meta.env.BASE_URL}content.json`).catch(() => null)
+  if (!res?.ok) throw new ApiError(res?.status ?? 0, 'Could not load the page details. Try refreshing.')
+  return (await res.json()) as T
+}

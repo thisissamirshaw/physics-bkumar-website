@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { api, json } from '../api'
+import { STATIC_SITE, api, json } from '../api'
 import { STUDENT_CLASSES, TARGETS, type SiteSettings } from '../types'
 
 type FormState = { kind: 'idle' } | { kind: 'sending' } | { kind: 'done'; message: string } | { kind: 'error'; message: string }
@@ -15,6 +15,25 @@ export default function Visit({ settings: s }: { settings?: SiteSettings }) {
     if (data.name.trim().length < 2) return setState({ kind: 'error', message: 'Enter the student’s name.' })
     if (data.phone.replace(/\D/g, '').length < 10)
       return setState({ kind: 'error', message: 'Enter a 10-digit mobile number.' })
+
+    if (STATIC_SITE) {
+      const text = [
+        `Demo class request: ${data.name.trim()}`,
+        `Mobile: ${data.phone.trim()}`,
+        `Class: ${data.student_class} · Target: ${data.target}`,
+        data.message?.trim() ? `Note: ${data.message.trim()}` : '',
+      ].filter(Boolean).join('\n')
+      const wa = s?.whatsapp.replace(/\D/g, '')
+      if (wa) {
+        window.open(`https://wa.me/${wa}?text=${encodeURIComponent(text)}`, '_blank', 'noopener')
+        return setState({ kind: 'done', message: 'WhatsApp has opened with your request. Press send there and we’ll reply soon.' })
+      }
+      if (s?.email) {
+        window.location.href = `mailto:${s.email}?subject=${encodeURIComponent('Demo class request')}&body=${encodeURIComponent(text)}`
+        return setState({ kind: 'done', message: 'Your email app has opened with your request. Press send there and we’ll call you back.' })
+      }
+      return setState({ kind: 'done', message: `Please call us on ${s?.phone ?? 'the number above'} to book your demo class.` })
+    }
 
     setState({ kind: 'sending' })
     try {

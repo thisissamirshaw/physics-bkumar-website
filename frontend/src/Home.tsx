@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { api } from './api'
+import { loadContent } from './api'
 import type { Content } from './types'
 import Header from './components/Header'
 import Hero from './components/Hero'
@@ -20,7 +20,7 @@ export default function Home() {
 
   useEffect(() => {
     let alive = true
-    api<Content>('/content')
+    loadContent<Content>()
       .then((c) => alive && setContent(c))
       .catch((e: Error) => alive && setError(e.message))
     return () => {

@@ -1,0 +1,122 @@
+{
+    "settings": {
+        "centre_name": "Physics by B. Kumar",
+        "tagline": "Physics coaching for Class 11\u201312, JEE and NEET",
+        "address": "Street address, New Delhi",
+        "phone": "+91 00000 00000",
+        "whatsapp": "",
+        "email": "",
+        "hours": "Mon\u2013Sat, 10:00\u201321:00",
+        "maps_url": "https://www.google.com/maps/place/Physics+by+B+kumar/@28.5534024,77.1729163,896m/data=!3m2!1e3!4b1!4m6!3m5!1s0x390d1d14c3f57f7d:0xc3bf5564dc01efc1!8m2!3d28.5533977!4d77.1754912!16s%2Fg%2F11nk80mpgp",
+        "batch_session": "2027 session",
+        "mentor_name": "B. Kumar",
+        "mentor_quote": "If you can draw the free-body diagram, you've already solved half the problem.",
+        "mentor_bio": "Every class is taught by B. Kumar personally. Replace this with a short bio: education, years of teaching, and what makes the classes different.",
+        "mentor_photo_url": "",
+        "mentor_credentials": [
+            "Qualification",
+            "Years of teaching",
+            "Students mentored"
+        ],
+        "facts": [
+            {
+                "value": "25",
+                "label": "Students per batch, max"
+            },
+            {
+                "value": "3",
+                "label": "Tracks: Boards, JEE, NEET"
+            },
+            {
+                "value": "Weekly",
+                "label": "Chapter tests with review"
+            },
+            {
+                "value": "1 : 1",
+                "label": "Doubt sessions every Sunday"
+            }
+        ]
+    },
+    "programs": [
+        {
+            "code": "TRACK \u00b7 BOARDS",
+            "title": "Class 11 & 12",
+            "duration": "2 years",
+            "summary": "Full CBSE syllabus with NCERT at the core. Derivations written out, numericals timed, and practicals explained.",
+            "focus": "NCERT, derivations, board pattern",
+            "classes": "4 per week",
+            "tests": "Chapter + pre-board",
+            "sort_order": 1,
+            "id": 1
+        },
+        {
+            "code": "TRACK \u00b7 JEE",
+            "title": "JEE Main & Advanced",
+            "duration": "1\u20132 years",
+            "summary": "Concepts taken to Advanced depth: multi-concept problems, calculus in mechanics, and speed for Main.",
+            "focus": "Problem solving, Irodov-level",
+            "classes": "5 per week",
+            "tests": "Weekly + full mocks",
+            "sort_order": 2,
+            "id": 2
+        },
+        {
+            "code": "TRACK \u00b7 NEET",
+            "title": "NEET Physics",
+            "duration": "1\u20132 years",
+            "summary": "The subject most NEET aspirants fear, made scoring. Formula fluency, shortcuts that hold up, and accuracy drills.",
+            "focus": "NCERT + MCQ speed",
+            "classes": "4 per week",
+            "tests": "Weekly 45-question MCQ",
+            "sort_order": 3,
+            "id": 3
+        }
+    ],
+    "batches": [
+        {
+            "name": "Class 11 Foundation",
+            "track": "Boards + JEE",
+            "days": "Mon \u00b7 Wed \u00b7 Fri",
+            "time": "16:00\u201318:00",
+            "starts_on": "2027-04-05",
+            "status": "open",
+            "active": true,
+            "sort_order": 1,
+            "id": 1
+        },
+        {
+            "name": "Class 12 Boards",
+            "track": "Boards",
+            "days": "Tue \u00b7 Thu \u00b7 Sat",
+            "time": "16:00\u201318:00",
+            "starts_on": "2027-04-01",
+            "status": "few",
+            "active": true,
+            "sort_order": 2,
+            "id": 2
+        },
+        {
+            "name": "JEE Target",
+            "track": "JEE Main + Adv",
+            "days": "Mon \u2013 Fri",
+            "time": "18:30\u201320:30",
+            "starts_on": "2027-04-12",
+            "status": "open",
+            "active": true,
+            "sort_order": 3,
+            "id": 3
+        },
+        {
+            "name": "NEET Target",
+            "track": "NEET",
+            "days": "Tue \u00b7 Thu \u00b7 Sat",
+            "time": "18:30\u201320:30",
+            "starts_on": "2027-04-12",
+            "status": "waitlist",
+            "active": true,
+            "sort_order": 4,
+            "id": 4
+        }
+    ],
+    "testimonials": []
+}

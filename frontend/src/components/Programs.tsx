@@ -1,17 +1,14 @@
-import type { Program } from '../types'
+import type { Program, SectionHead as Head } from '../types'
+import SectionHead, { blockClass } from './SectionHead'
 
-export default function Programs({ programs }: { programs?: Program[] }) {
+type Props = { programs?: Program[]; head: Head; flush: boolean; linkTo: string | null }
+
+export default function Programs({ programs, head, flush, linkTo }: Props) {
+  if (programs?.length === 0) return null
   return (
-    <section className="block" id="programs">
+    <section className={blockClass(flush)} id="programs">
       <div className="wrap">
-        <div className="sec-head">
-          <span className="eyebrow">Programs</span>
-          <h2>One subject. Three ways to sit the exam.</h2>
-          <p>
-            The same physics underneath, with different depth, pace and question style for each exam. Pick the track
-            that matches your target.
-          </p>
-        </div>
+        <SectionHead head={head} />
         <div className="programs">
           {(programs ?? [null, null, null]).map((p, i) =>
             p ? (
@@ -21,15 +18,17 @@ export default function Programs({ programs }: { programs?: Program[] }) {
                   {p.duration && <span className="tag">{p.duration}</span>}
                 </div>
                 <h3>{p.title}</h3>
-                <p>{p.summary}</p>
+                {p.summary && <p>{p.summary}</p>}
                 <dl className="spec">
-                  <div><dt>Focus</dt><dd>{p.focus}</dd></div>
-                  <div><dt>Classes</dt><dd>{p.classes}</dd></div>
-                  <div><dt>Tests</dt><dd>{p.tests}</dd></div>
+                  {p.focus && <div><dt>Focus</dt><dd>{p.focus}</dd></div>}
+                  {p.classes && <div><dt>Classes</dt><dd>{p.classes}</dd></div>}
+                  {p.tests && <div><dt>Tests</dt><dd>{p.tests}</dd></div>}
                 </dl>
-                <a className="more" href="#batches">
-                  View batches <span className="arrow">→</span>
-                </a>
+                {linkTo && (
+                  <a className="more" href={linkTo} aria-label={`${linkTo === '#batches' ? 'View batches' : 'Book a demo'} for ${p.title}`}>
+                    {linkTo === '#batches' ? 'View batches' : 'Book a demo'} <span className="arrow">→</span>
+                  </a>
+                )}
               </article>
             ) : (
               <article className="program is-loading" key={i} aria-hidden="true">

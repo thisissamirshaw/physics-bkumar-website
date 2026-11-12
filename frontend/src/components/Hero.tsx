@@ -1,34 +1,48 @@
+import type { PageContent } from '../types'
 import ProjectileCanvas from './ProjectileCanvas'
 
-export default function Hero() {
+type Props = { hero: PageContent['hero']; loading: boolean; primaryHref: string; showSecondary: boolean }
+
+export default function Hero({ hero, loading, primaryHref, showSecondary }: Props) {
   return (
-    <section className="hero">
+    <section className={`hero${hero.show_simulation ? '' : ' no-lab'}`}>
       <div className="wrap hero-grid">
         <div className="hero-copy">
-          <span className="eyebrow">Physics coaching · New Delhi</span>
-          <h1>
-            Physics, built from <em>first principles.</em>
-          </h1>
-          <p className="hero-lede">
-            Small batches for Class 11 and 12, JEE Main &amp; Advanced, and NEET. Every chapter is derived, then
-            drilled, then tested.
-          </p>
-          <div className="hero-cta">
-            <a className="btn btn-primary" href="#visit">
-              Book a free demo class <span className="arrow">→</span>
-            </a>
-            <a className="btn btn-ghost" href="#programs">
-              See programs
-            </a>
-          </div>
-          <div className="tracks" aria-label="Tracks offered">
-            <span>CBSE 11–12</span>
-            <span>JEE Main</span>
-            <span>JEE Advanced</span>
-            <span>NEET</span>
-          </div>
+          {loading ? (
+            // Until the real copy arrives, hold its space instead of flashing the starter text.
+            <div className="hero-loading" aria-hidden="true">
+              <span className="skeleton" style={{ width: '18ch' }} />
+              <span className="skeleton h1" style={{ width: '90%' }} />
+              <span className="skeleton h1" style={{ width: '60%' }} />
+              <span className="skeleton" style={{ width: '32ch', maxWidth: '100%' }} />
+              <span className="skeleton" style={{ width: '26ch', maxWidth: '100%' }} />
+            </div>
+          ) : (
+            <>
+              {hero.eyebrow && <span className="eyebrow">{hero.eyebrow}</span>}
+              <h1>
+                {hero.title} {hero.title_accent && <em>{hero.title_accent}</em>}
+              </h1>
+              {hero.lede && <p className="hero-lede">{hero.lede}</p>}
+              <div className="hero-cta">
+                {hero.cta_primary && (
+                  <a className="btn btn-primary" href={primaryHref}>
+                    {hero.cta_primary} <span className="arrow">→</span>
+                  </a>
+                )}
+                {hero.cta_secondary && showSecondary && (
+                  <a className="btn btn-ghost" href="#programs">{hero.cta_secondary}</a>
+                )}
+              </div>
+              {hero.tracks.length > 0 && (
+                <ul className="tracks" aria-label="Tracks offered">
+                  {hero.tracks.map((t) => <li key={t}>{t}</li>)}
+                </ul>
+              )}
+            </>
+          )}
         </div>
-        <ProjectileCanvas />
+        {hero.show_simulation && <ProjectileCanvas />}
       </div>
     </section>
   )

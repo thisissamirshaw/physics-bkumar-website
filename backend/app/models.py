@@ -1,6 +1,6 @@
 from datetime import date, datetime, timezone
 
-from sqlalchemy import JSON, Boolean, Date, DateTime, Integer, String, Text
+from sqlalchemy import JSON, Boolean, Date, DateTime, Integer, LargeBinary, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .db import Base
@@ -87,3 +87,57 @@ class Enquiry(Base):
     notes: Mapped[str] = mapped_column(Text, default="")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
+
+
+class AdminUser(Base):
+    """The super admin account. Seeded on first start; changed from the console."""
+
+    __tablename__ = "admin_users"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    email: Mapped[str] = mapped_column(String(160), unique=True)
+    password_hash: Mapped[str] = mapped_column(String(300))
+    # Bumped on password change or "sign out everywhere": older tokens stop working.
+    token_version: Mapped[int] = mapped_column(Integer, default=1)
+    # True while the account still has the starter password from config.
+    starter_password: Mapped[bool] = mapped_column(Boolean, default=False)
+    last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class PageDoc(Base):
+    """One editable block of homepage copy (hero, method, syllabus, ...), stored as JSON.
+
+    Rows are optional: a missing key falls back to the defaults in page.py.
+    """
+
+    __tablename__ = "page_docs"
+
+    key: Mapped[str] = mapped_column(String(40), primary_key=True)
+    value: Mapped[dict] = mapped_column(JSON)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
+
+
+class Activity(Base):
+    """Audit trail of what was done in the console."""
+
+    __tablename__ = "activity"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True)
+    actor: Mapped[str] = mapped_column(String(160), default="")
+    action: Mapped[str] = mapped_column(String(40))
+    detail: Mapped[str] = mapped_column(String(300), default="")
+
+
+class Media(Base):
+    """Small images uploaded from the console (e.g. the teacher's photo), kept in the database
+    so they survive on hosts with no persistent disk."""
+
+    __tablename__ = "media"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    filename: Mapped[str] = mapped_column(String(160))
+    content_type: Mapped[str] = mapped_column(String(40))
+    data: Mapped[bytes] = mapped_column(LargeBinary)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)

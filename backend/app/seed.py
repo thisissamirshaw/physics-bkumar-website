@@ -1,4 +1,4 @@
-"""First-run content. Everything here can be edited later from /admin.
+"""First-run content and the super admin account. Everything here can be edited later from /admin.
 
 Values like "Street address, New Delhi", "+91 00000 00000" and the
 "Sample student" testimonials are placeholders to replace with the centre's real details.
@@ -9,7 +9,9 @@ from datetime import date
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from .models import Batch, Program, SiteSettings, Testimonial
+from .config import DEFAULT_SUPERADMIN_PASSWORD, get_settings
+from .models import AdminUser, Batch, Program, SiteSettings, Testimonial
+from .security import hash_password
 
 MAPS_URL = (
     "https://www.google.com/maps/place/Physics+by+B+kumar/@28.5534024,77.1729163,896m/"
@@ -18,7 +20,27 @@ MAPS_URL = (
 )
 
 
+def ensure_superadmin(db: Session, reset: bool = False) -> AdminUser:
+    """Create the super admin account if there is none. With reset=True, put the existing
+    account back to the email and password in the config and sign out every session."""
+    cfg = get_settings()
+    user = db.scalar(select(AdminUser).order_by(AdminUser.id).limit(1))
+    if user is not None and not reset:
+        return user
+    if user is None:
+        user = AdminUser(token_version=1)
+        db.add(user)
+    else:
+        user.token_version += 1
+    user.email = cfg.superadmin_email.strip().lower()
+    user.password_hash = hash_password(cfg.superadmin_password)
+    user.starter_password = cfg.superadmin_password == DEFAULT_SUPERADMIN_PASSWORD
+    db.commit()
+    return user
+
+
 def seed(db: Session) -> None:
+    ensure_superadmin(db)
     if db.scalar(select(SiteSettings).limit(1)) is not None:
         return
 

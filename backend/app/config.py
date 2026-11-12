@@ -7,18 +7,29 @@ BACKEND_DIR = Path(__file__).resolve().parent.parent
 PROJECT_DIR = BACKEND_DIR.parent
 
 DEFAULT_SECRET = "dev-secret-change-me"
-DEFAULT_PASSWORD = "admin"
+DEFAULT_SUPERADMIN_EMAIL = "superadmin@example.com"
+DEFAULT_SUPERADMIN_PASSWORD = "12345678"
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=BACKEND_DIR / ".env", extra="ignore")
 
-    app_env: str = "development"  # "production" refuses to start with default secrets
+    app_env: str = "development"  # "production" refuses to start with the default SECRET_KEY
     database_url: str = f"sqlite:///{BACKEND_DIR / 'physics.db'}"
     secret_key: str = DEFAULT_SECRET
-    admin_password: str = DEFAULT_PASSWORD
+
+    # The super admin account is created from these the first time the server starts
+    # (and by `python -m app.reset_admin`). After that the email and password live in
+    # the database and are changed from the console: Account & security.
+    superadmin_email: str = DEFAULT_SUPERADMIN_EMAIL
+    superadmin_password: str = DEFAULT_SUPERADMIN_PASSWORD
+
     token_ttl_hours: int = 12
-    cors_origins: list[str] = ["http://localhost:5173", "http://127.0.0.1:5173"]
+    cors_origins: list[str] = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "https://thisissamirshaw.github.io",
+    ]
     frontend_dist: Path = PROJECT_DIR / "frontend" / "dist"
 
     # Abuse protection for public forms: max requests per IP per window.
@@ -30,8 +41,6 @@ class Settings(BaseSettings):
         problems = []
         if self.secret_key == DEFAULT_SECRET:
             problems.append("SECRET_KEY is the default value")
-        if self.admin_password == DEFAULT_PASSWORD:
-            problems.append("ADMIN_PASSWORD is the default value")
         return problems
 
 

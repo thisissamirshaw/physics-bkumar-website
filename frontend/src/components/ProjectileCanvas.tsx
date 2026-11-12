@@ -178,9 +178,13 @@ export default function ProjectileCanvas() {
       if (reduce) draw(still)
     }
     mq.addEventListener('change', onTheme)
+    // The accent colour chosen in the console is applied to <html> after this first draw.
+    const accentWatch = new MutationObserver(onTheme)
+    accentWatch.observe(root, { attributes: true, attributeFilter: ['data-accent'] })
     document.fonts?.ready.then(onTheme)
 
     return () => {
+      accentWatch.disconnect()
       cancelAnimationFrame(raf)
       ro.disconnect()
       mq.removeEventListener('change', onTheme)

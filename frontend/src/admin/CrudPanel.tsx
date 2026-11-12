@@ -1,17 +1,7 @@
-import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
+import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { api, json } from '../api'
-
-export type FieldType = 'text' | 'textarea' | 'number' | 'date' | 'select' | 'checkbox'
-
-export type Field = {
-  key: string
-  label: string
-  type: FieldType
-  options?: { value: string; label: string }[]
-  required?: boolean
-  wide?: boolean
-  hint?: string
-}
+import { FieldInput, type Field } from './fields'
+import { ConfirmButton, Loading, PanelHead, useToast, useUnsaved } from './ui'
 
 export type Column<T> = { label: string; render: (row: T) => ReactNode; mono?: boolean }
 
@@ -20,64 +10,81 @@ export type CrudConfig<T extends { id: number }> = {
   description: string
   path: string // e.g. "/admin/batches"
   noun: string // e.g. "batch"
+  plural: string // e.g. "batches"
+  /** The field that names a row, for button labels: "Edit JEE Target". */
+  nameKey: keyof T & string
+  /** The true/false field that puts a row on the website, if the table has one. */
+  visibleKey?: keyof T & string
   fields: Field[]
   columns: Column<T>[]
-  blank: Omit<T, 'id'>
+  blank: Omit<T, 'id' | 'sort_order'>
+  /** Where the rows show on the website, e.g. "#batches". */
+  preview: string
 }
 
 type Row = { id: number } & Record<string, unknown>
+type Draft = Record<string, unknown> & { id?: number }
 
 export default function CrudPanel<T extends { id: number }>(cfg: CrudConfig<T>) {
+  const toast = useToast()
   const [rows, setRows] = useState<T[] | null>(null)
-  const [editing, setEditing] = useState<(Partial<T> & { id?: number }) | null>(null)
+  const [editing, setEditing] = useState<Draft | null>(null)
+  const [original, setOriginal] = useState('')
   const [error, setError] = useState('')
   const [formError, setFormError] = useState('')
   const [saving, setSaving] = useState(false)
-  const [confirmDelete, setConfirmDelete] = useState<number | null>(null)
-  const [flash, setFlash] = useState('')
 
-  const load = () =>
-    api<T[]>(cfg.path, { admin: true })
-      .then((r) => {
-        setRows(r)
-        setError('')
-      })
-      .catch((e: Error) => setError(e.message))
-
+  const load = useCallback(
+    () =>
+      api<T[]>(cfg.path, { admin: true })
+        .then((r) => {
+          setRows(r)
+          setError('')
+        })
+        .catch((e: Error) => setError(e.message)),
+    [cfg.path],
+  )
   useEffect(() => {
     load()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cfg.path])
+  }, [load])
 
+  useUnsaved(editing !== null && JSON.stringify(editing) !== original)
+
+  const open = (draft: Draft) => {
+    setFormError('')
+    setEditing(draft)
+    setOriginal(JSON.stringify(draft))
+  }
+  const close = () => {
+    if (JSON.stringify(editing) !== original && !window.confirm('Close without saving your changes?')) return
+    setEditing(null)
+  }
+
+  // Escape closes the edit sheet.
   useEffect(() => {
-    if (!flash) return
-    const id = window.setTimeout(() => setFlash(''), 2500)
-    return () => window.clearTimeout(id)
-  }, [flash])
+    if (!editing) return
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && close()
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editing, original])
 
   async function save(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
     if (!editing) return
     const body: Record<string, unknown> = {}
     for (const f of cfg.fields) {
-      const v = (editing as Record<string, unknown>)[f.key]
-      if (f.required && (v === '' || v === undefined || v === null)) {
-        setFormError(`${f.label} is required.`)
-        return
-      }
-      body[f.key] = f.type === 'number' ? Number(v ?? 0) : v
+      const v = editing[f.key]
+      if (f.required && (v === '' || v === undefined || v === null)) return setFormError(`${f.label} is required.`)
+      body[f.key] = f.type === 'number' ? Number(v ?? 0) : typeof v === 'string' ? v.trim() : v
     }
     setSaving(true)
     setFormError('')
     try {
       const isNew = editing.id === undefined
-      await api(isNew ? cfg.path : `${cfg.path}/${editing.id}`, {
-        method: isNew ? 'POST' : 'PATCH',
-        admin: true,
-        body: json(body),
-      })
+      await api(isNew ? cfg.path : `${cfg.path}/${editing.id}`, { method: isNew ? 'POST' : 'PATCH', admin: true, body: json(body) })
       setEditing(null)
-      setFlash(isNew ? `Added ${cfg.noun}.` : 'Saved.')
+      toast(isNew ? `Added the ${cfg.noun}.` : 'Saved.')
       load()
     } catch (err) {
       setFormError((err as Error).message)
@@ -86,118 +93,135 @@ export default function CrudPanel<T extends { id: number }>(cfg: CrudConfig<T>) 
     }
   }
 
-  async function remove(id: number) {
+  async function act(run: () => Promise<unknown>, done?: string) {
     try {
-      await api(`${cfg.path}/${id}`, { method: 'DELETE', admin: true })
-      setConfirmDelete(null)
-      setFlash(`Deleted ${cfg.noun}.`)
-      load()
+      await run()
+      setError('')
+      if (done) toast(done)
     } catch (err) {
       setError((err as Error).message)
     }
+    load()
   }
 
-  const set = (key: string, value: unknown) => setEditing((cur) => (cur ? { ...cur, [key]: value } : cur))
+  const remove = (row: Row) => act(() => api(`${cfg.path}/${row.id}`, { method: 'DELETE', admin: true }), `Deleted the ${cfg.noun}.`)
+
+  const toggle = (row: Row) => {
+    const key = cfg.visibleKey!
+    const next = !row[key]
+    setRows((cur) => cur?.map((r) => (r.id === row.id ? { ...r, [key]: next } : r)) ?? null) // show it at once
+    return act(
+      () => api(`${cfg.path}/${row.id}`, { method: 'PATCH', admin: true, body: json({ [key]: next }) }),
+      next ? 'Now showing on the website.' : 'Hidden from the website.',
+    )
+  }
+
+  const move = (index: number, by: number) => {
+    if (!rows) return
+    const next = [...rows]
+    const [row] = next.splice(index, 1)
+    next.splice(index + by, 0, row)
+    setRows(next)
+    return act(() => api(`${cfg.path}/reorder`, { method: 'POST', admin: true, body: json({ ids: next.map((r) => r.id) }) }))
+  }
+
+  const duplicate = (row: Row) => {
+    const copy: Draft = {}
+    for (const f of cfg.fields) copy[f.key] = row[f.key]
+    copy[cfg.nameKey as string] = `${String(row[cfg.nameKey])} (copy)`
+    if (cfg.visibleKey) copy[cfg.visibleKey as string] = false // a copy starts hidden until it has been edited
+    open(copy)
+  }
+
+  const name = (row: Row) => String(row[cfg.nameKey])
+  const shown = cfg.visibleKey && rows ? rows.filter((r) => (r as Row)[cfg.visibleKey!]).length : null
 
   return (
     <section className="adm-panel">
-      <header className="adm-head">
-        <div>
-          <h1>{cfg.title}</h1>
-          <p>{cfg.description}</p>
-        </div>
-        <button className="btn btn-primary" type="button" onClick={() => { setFormError(''); setEditing({ ...cfg.blank } as Partial<T>) }}>
-          Add {cfg.noun}
-        </button>
-      </header>
+      <PanelHead
+        title={cfg.title}
+        actions={
+          <>
+            <a className="btn btn-ghost" href={`${import.meta.env.BASE_URL}?preview${cfg.preview}`} target="_blank" rel="noopener">See on website ↗</a>
+            <button className="btn btn-primary" type="button" onClick={() => open({ ...cfg.blank })}>Add {cfg.noun}</button>
+          </>
+        }
+      >
+        {cfg.description}
+      </PanelHead>
 
-      {error && <p className="adm-error" role="alert">{error}</p>}
-      {flash && <p className="adm-flash" role="status">{flash}</p>}
+      {error && rows && <p className="adm-error" role="alert">{error}</p>}
 
       {rows === null ? (
-        <p className="adm-muted">Loading…</p>
+        <Loading error={error} retry={load} />
       ) : rows.length === 0 ? (
-        <div className="adm-empty">No {cfg.noun} yet. Use “Add {cfg.noun}” to create the first one.</div>
+        <div className="adm-empty">No {cfg.plural} yet. Use “Add {cfg.noun}” to create the first one.</div>
       ) : (
-        <div className="adm-table">
-          <table>
-            <thead>
-              <tr>
-                {cfg.columns.map((c) => <th key={c.label}>{c.label}</th>)}
-                <th aria-label="Actions" />
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r) => (
-                <tr key={r.id}>
-                  {cfg.columns.map((c) => <td key={c.label} className={c.mono ? 'mono' : ''}>{c.render(r)}</td>)}
-                  <td className="actions">
-                    {confirmDelete === r.id ? (
-                      <span className="confirm">
-                        <button type="button" className="danger" onClick={() => remove(r.id)}>Delete</button>
-                        <button type="button" onClick={() => setConfirmDelete(null)}>Keep</button>
-                      </span>
-                    ) : (
-                      <>
-                        <button type="button" className="link-btn" onClick={() => { setFormError(''); setEditing({ ...r }) }}>Edit</button>
-                        <button type="button" className="link-btn" onClick={() => setConfirmDelete(r.id)}>Delete</button>
-                      </>
-                    )}
-                  </td>
+        <>
+          <p className="adm-count">
+            {rows.length} {rows.length === 1 ? cfg.noun : cfg.plural}
+            {shown !== null && `, ${shown} on the website`}. Use the arrows to change the order on the page.
+          </p>
+          <div className="adm-table" tabIndex={0} role="region" aria-label={cfg.title}>
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">Order</th>
+                  {cfg.columns.map((c) => <th scope="col" key={c.label}>{c.label}</th>)}
+                  {cfg.visibleKey && <th scope="col">On site</th>}
+                  <th scope="col"><span className="sr-only">Actions</span></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {(rows as unknown as Row[]).map((r, i) => (
+                  <tr key={r.id} className={cfg.visibleKey && !r[cfg.visibleKey] ? 'is-hidden' : ''}>
+                    <td className="order">
+                      <button type="button" className="icon-btn" disabled={i === 0} onClick={() => move(i, -1)} aria-label={`Move ${name(r)} up`}>↑</button>
+                      <button type="button" className="icon-btn" disabled={i === rows.length - 1} onClick={() => move(i, 1)} aria-label={`Move ${name(r)} down`}>↓</button>
+                    </td>
+                    {cfg.columns.map((c) => <td key={c.label} className={c.mono ? 'mono' : ''}>{c.render(r as unknown as T)}</td>)}
+                    {cfg.visibleKey && (
+                      <td>
+                        <button
+                          type="button" role="switch" aria-checked={Boolean(r[cfg.visibleKey])} className="switch"
+                          aria-label={`Show ${name(r)} on the website`} onClick={() => toggle(r)}
+                        >
+                          <span aria-hidden="true" />
+                          {r[cfg.visibleKey] ? 'Shown' : 'Hidden'}
+                        </button>
+                      </td>
+                    )}
+                    <td className="actions">
+                      <button type="button" className="link-btn" onClick={() => open({ ...r })} aria-label={`Edit ${name(r)}`}>Edit</button>
+                      <button type="button" className="link-btn" onClick={() => duplicate(r)} aria-label={`Duplicate ${name(r)}`}>Copy</button>
+                      <ConfirmButton onConfirm={() => remove(r)} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
 
       {editing && (
         <div className="adm-sheet" role="dialog" aria-modal="true" aria-label={editing.id ? `Edit ${cfg.noun}` : `Add ${cfg.noun}`}>
-          <div className="adm-sheet-backdrop" onClick={() => setEditing(null)} />
-          <form className="adm-sheet-body" onSubmit={save}>
+          <div className="adm-sheet-backdrop" onClick={close} />
+          <form className="adm-sheet-body" onSubmit={save} noValidate>
             <h2>{editing.id ? `Edit ${cfg.noun}` : `Add ${cfg.noun}`}</h2>
             <div className="adm-form-grid">
               {cfg.fields.map((f) => (
-                <FieldInput key={f.key} field={f} value={(editing as Row)[f.key]} onChange={(v) => set(f.key, v)} />
+                <FieldInput key={f.key} field={f} value={editing[f.key]} onChange={(v) => setEditing((cur) => (cur ? { ...cur, [f.key]: v } : cur))} />
               ))}
             </div>
             {formError && <p className="adm-error" role="alert">{formError}</p>}
             <div className="adm-sheet-actions">
-              <button type="button" className="btn btn-ghost" onClick={() => setEditing(null)}>Cancel</button>
+              <button type="button" className="btn btn-ghost" onClick={close}>Cancel</button>
               <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? 'Saving…' : 'Save'}</button>
             </div>
           </form>
         </div>
       )}
     </section>
-  )
-}
-
-export function FieldInput({ field: f, value, onChange }: { field: Field; value: unknown; onChange: (v: unknown) => void }) {
-  const id = `fld-${f.key}`
-  if (f.type === 'checkbox') {
-    return (
-      <label className={`check${f.wide ? ' wide' : ''}`} htmlFor={id}>
-        <input id={id} type="checkbox" checked={Boolean(value)} onChange={(e) => onChange(e.target.checked)} />
-        <span>{f.label}</span>
-        {f.hint && <small>{f.hint}</small>}
-      </label>
-    )
-  }
-  const common = { id, value: (value ?? '') as string | number, required: f.required }
-  return (
-    <div className={`field${f.wide || f.type === 'textarea' ? ' wide' : ''}`}>
-      <label htmlFor={id}>{f.label}</label>
-      {f.type === 'textarea' ? (
-        <textarea {...common} rows={3} onChange={(e) => onChange(e.target.value)} />
-      ) : f.type === 'select' ? (
-        <select {...common} onChange={(e) => onChange(e.target.value)}>
-          {f.options?.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-        </select>
-      ) : (
-        <input {...common} type={f.type} onChange={(e) => onChange(e.target.value)} />
-      )}
-      {f.hint && <small className="hint">{f.hint}</small>}
-    </div>
   )
 }

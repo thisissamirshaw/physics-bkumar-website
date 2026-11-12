@@ -1,5 +1,6 @@
 # Free hosting on GitHub Pages: builds the site as plain files.
-# Page content comes from frontend/public/content.json (edit it to change details).
+# Page content comes from frontend/public/content.json (download a fresh one from the console:
+# Backup & restore), unless the API_URL variable below points this copy at a live server.
 name: Deploy to GitHub Pages
 
 on:
@@ -33,6 +34,10 @@ jobs:
         working-directory: frontend
         env:
           VITE_STATIC: '1'
+          # Optional repository variable (Settings → Secrets and variables → Actions → Variables):
+          # the address of the hosted server, e.g. https://physics-bkumar.onrender.com. When set,
+          # this copy reads live content from it, sends enquiries to it and includes /admin.
+          VITE_API_URL: ${{ vars.API_URL }}
         run: |
           npm ci --no-audit --no-fund
           npx tsc -b

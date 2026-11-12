@@ -1,7 +1,7 @@
-export default function WhatsAppButton({ number }: { number: string }) {
-  const text = encodeURIComponent('Hi, I would like to book a free physics demo class.')
+export default function WhatsAppButton({ number, message }: { number: string; message: string }) {
+  const query = message.trim() ? `?text=${encodeURIComponent(message.trim())}` : ''
   return (
-    <a className="wa" href={`https://wa.me/${number}?text=${text}`} target="_blank" rel="noopener noreferrer">
+    <a className="wa" href={`https://wa.me/${number}${query}`} target="_blank" rel="noopener noreferrer" aria-label="Chat with us on WhatsApp">
       <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
         <path
           fill="currentColor"

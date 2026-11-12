@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Start the API (port 8000) and the React dev server (port 5173) together.
-# Open http://localhost:5173 for the site and http://localhost:5173/admin for admin.
+# Open http://localhost:5173 for the site and http://localhost:5173/admin for the super admin console.
 set -euo pipefail
 cd "$(dirname "$0")"
 

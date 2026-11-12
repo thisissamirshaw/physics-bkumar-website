@@ -1,0 +1,190 @@
+{
+  "hero": {
+    "eyebrow": "Physics coaching · New Delhi",
+    "title": "Physics, built from",
+    "title_accent": "first principles.",
+    "lede": "Small batches for Class 11 and 12, JEE Main & Advanced, and NEET. Every chapter is derived, then drilled, then tested.",
+    "cta_primary": "Book a free demo class",
+    "cta_secondary": "See programs",
+    "tracks": [
+      "CBSE 11–12",
+      "JEE Main",
+      "JEE Advanced",
+      "NEET"
+    ],
+    "show_simulation": true
+  },
+  "announcement": {
+    "enabled": false,
+    "text": "",
+    "link_label": "",
+    "link_url": ""
+  },
+  "sections": {
+    "facts": {
+      "show": true,
+      "eyebrow": "",
+      "title": "",
+      "intro": ""
+    },
+    "programs": {
+      "show": true,
+      "eyebrow": "Programs",
+      "title": "One subject. Three ways to sit the exam.",
+      "intro": "The same physics underneath, with different depth, pace and question style for each exam. Pick the track that matches your target."
+    },
+    "method": {
+      "show": true,
+      "eyebrow": "Method",
+      "title": "How every chapter is taught",
+      "intro": "The same four steps, in the same order, for every topic from kinematics to semiconductors."
+    },
+    "syllabus": {
+      "show": true,
+      "eyebrow": "Syllabus",
+      "title": "Everything from units to nuclei",
+      "intro": "The full Class 11–12 physics syllabus, which is also the common ground of JEE and NEET."
+    },
+    "mentor": {
+      "show": true,
+      "eyebrow": "Your teacher",
+      "title": "",
+      "intro": ""
+    },
+    "results": {
+      "show": true,
+      "eyebrow": "Results",
+      "title": "What students say",
+      "intro": "Scores and words from students who studied here."
+    },
+    "batches": {
+      "show": true,
+      "eyebrow": "Batches",
+      "title": "Upcoming batches",
+      "intro": "Seats are limited so every student gets attention. Book a demo class to reserve a seat."
+    },
+    "visit": {
+      "show": true,
+      "eyebrow": "Visit the centre",
+      "title": "Sit in on a class before you decide.",
+      "intro": ""
+    }
+  },
+  "method": {
+    "steps": [
+      {
+        "title": "Concept",
+        "text": "Start from what is physically happening, with a diagram on the board before any formula."
+      },
+      {
+        "title": "Derivation",
+        "text": "Build the result yourself, so `v² = u² + 2as` is something you can rebuild, not memorise."
+      },
+      {
+        "title": "Problems",
+        "text": "Graded sets, from NCERT to JEE Advanced, solved in class and then on your own."
+      },
+      {
+        "title": "Test & review",
+        "text": "A timed chapter test, then a one-on-one review of every mistake."
+      }
+    ]
+  },
+  "syllabus": {
+    "units": [
+      {
+        "name": "Mechanics",
+        "grade": "Class 11",
+        "chapters": [
+          "Units & dimensions",
+          "Kinematics",
+          "Laws of motion",
+          "Work, energy, power",
+          "Rotational motion",
+          "Gravitation",
+          "Properties of matter"
+        ]
+      },
+      {
+        "name": "Heat & waves",
+        "grade": "Class 11",
+        "chapters": [
+          "Thermal properties",
+          "Thermodynamics",
+          "Kinetic theory",
+          "Oscillations (SHM)",
+          "Waves"
+        ]
+      },
+      {
+        "name": "Electromagnetism",
+        "grade": "Class 12",
+        "chapters": [
+          "Electrostatics",
+          "Capacitance",
+          "Current electricity",
+          "Magnetism",
+          "EM induction",
+          "Alternating current",
+          "EM waves"
+        ]
+      },
+      {
+        "name": "Optics",
+        "grade": "Class 12",
+        "chapters": [
+          "Ray optics",
+          "Optical instruments",
+          "Wave optics"
+        ]
+      },
+      {
+        "name": "Modern physics",
+        "grade": "Class 12",
+        "chapters": [
+          "Dual nature",
+          "Atoms",
+          "Nuclei",
+          "Semiconductors"
+        ]
+      }
+    ]
+  },
+  "form": {
+    "enabled": true,
+    "title": "Book a free demo class",
+    "button_label": "Request a call back",
+    "note": "We’ll call to fix a demo class time that suits you.",
+    "message_placeholder": "School, preferred timing, weak chapters…",
+    "closed_text": "Online booking is paused right now. Please call us to book a demo class.",
+    "classes": [
+      "Class 11",
+      "Class 12",
+      "12th pass (dropper)",
+      "Class 10 (foundation)"
+    ],
+    "targets": [
+      "JEE Main & Advanced",
+      "NEET",
+      "Boards only"
+    ],
+    "whatsapp_message": "Hi, I would like to book a free physics demo class."
+  },
+  "branding": {
+    "brand_mark": "BK",
+    "brand_sub": "Class 11–12 · JEE · NEET",
+    "header_cta": "Book a demo class",
+    "accent": "blue",
+    "footer_note": "New Delhi",
+    "footer_equation": "F = dp/dt"
+  },
+  "seo": {
+    "title": "Physics by B. Kumar · Class 11–12, JEE & NEET Physics Coaching, New Delhi",
+    "description": "Small-batch physics coaching in New Delhi for Class 11–12 (CBSE), JEE Main & Advanced, and NEET. Concept, derivation, problems, test. Book a free demo class."
+  },
+  "status": {
+    "maintenance": false,
+    "maintenance_title": "We’ll be right back",
+    "maintenance_message": "The website is being updated. Please check again in a little while, or call us."
+  }
+}

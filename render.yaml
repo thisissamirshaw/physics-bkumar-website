@@ -11,7 +11,11 @@ services:
         value: production
       - key: SECRET_KEY
         generateValue: true
-      - key: ADMIN_PASSWORD
-        sync: false
+      # Optional: the super admin's first email and password. Left unset, the account starts as
+      # superadmin@example.com / 12345678 and is changed from the console (Account & security).
+      # - key: SUPERADMIN_EMAIL
+      #   sync: false
+      # - key: SUPERADMIN_PASSWORD
+      #   sync: false
       - key: DATABASE_URL
         sync: false
